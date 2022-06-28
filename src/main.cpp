@@ -19,5 +19,6 @@ int main(int argc, char **argv) {
     scene.add_object("suzanne.obj");
     Renderer *renderer = new Wireframe(&scene);
     renderer->loop();
+
     return 0;
 }

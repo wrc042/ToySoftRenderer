@@ -49,6 +49,7 @@ class Wireframe : public Renderer {
         std::set<std::pair<int, int>> edge_set;
         for (auto &object : (scene->objects)) {
             int old_size = vertices.cols();
+            offset += old_size;
             Eigen::VectorXf tmpv(object.vertices.cols());
             tmpv.setOnes();
             vertices.resize(4, vertices.cols() + (object.vertices).cols());
@@ -88,7 +89,6 @@ class Wireframe : public Renderer {
                     edges.push_back(tmp_pair);
                 }
             }
-            offset += old_size;
         }
     }
     void render() {
@@ -99,15 +99,52 @@ class Wireframe : public Renderer {
             Eigen::Vector3f v1 = vertices_proj.block(0, edge.second, 3, 1) /
                                  vertices_proj(3, edge.second);
             int x0, y0, x1, y1;
-            x0 = floor((v0(0) / v0(2) + 0.5f) * scene->width);
-            y0 = floor((0.5f - v0(1) / v0(2)) * scene->height);
-            x1 = floor((v1(0) / v1(2) + 0.5f) * scene->width);
-            y1 = floor((0.5f - v1(1) / v1(2)) * scene->height);
+            // if ((v0(2) > -scene->camera.z_near) ||
+            //     v1(2) > -scene->camera.z_near) {
+            //     continue;
+            // }
+            x0 = floor((0.5f + v0(0)) * scene->width);
+            y0 = floor((0.5f - v0(1)) * scene->height);
+            x1 = floor((0.5f + v1(0)) * scene->width);
+            y1 = floor((0.5f - v1(1)) * scene->height);
             if (x0 >= 0 && x0 < scene->width && x1 >= 0 && x1 < scene->width &&
                 y0 >= 0 && y0 < scene->height && y1 >= 0 &&
                 y1 < scene->height) {
                 scene->window.draw_line(x0, y0, x1, y1, Color(255, 255, 255));
             }
+        }
+        Eigen::Matrix<float, 4, 4> axis;
+        Eigen::Matrix<float, 4, 4> axis_proj;
+        axis << 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 1, 1, 1, 1;
+        axis_proj = scene->camera.proj_mat * scene->camera.extrinsic * axis;
+        Eigen::Vector3f v0 = axis_proj.block(0, 0, 3, 1) / axis_proj(3, 0);
+        Eigen::Vector3f v1 = axis_proj.block(0, 1, 3, 1) / axis_proj(3, 1);
+        int x0, y0, x1, y1;
+        x0 = floor((0.5f + v0(0)) * scene->width);
+        y0 = floor((0.5f - v0(1)) * scene->height);
+        x1 = floor((0.5f + v1(0)) * scene->width);
+        y1 = floor((0.5f - v1(1)) * scene->height);
+        if (x0 >= 0 && x0 < scene->width && x1 >= 0 && x1 < scene->width &&
+            y0 >= 0 && y0 < scene->height && y1 >= 0 && y1 < scene->height) {
+            scene->window.draw_line(x0, y0, x1, y1, Color(255, 0, 0));
+        }
+        v1 = axis_proj.block(0, 2, 3, 1) / axis_proj(3, 2);
+        x0 = floor((0.5f + v0(0)) * scene->width);
+        y0 = floor((0.5f - v0(1)) * scene->height);
+        x1 = floor((0.5f + v1(0)) * scene->width);
+        y1 = floor((0.5f - v1(1)) * scene->height);
+        if (x0 >= 0 && x0 < scene->width && x1 >= 0 && x1 < scene->width &&
+            y0 >= 0 && y0 < scene->height && y1 >= 0 && y1 < scene->height) {
+            scene->window.draw_line(x0, y0, x1, y1, Color(0, 255, 0));
+        }
+        v1 = axis_proj.block(0, 3, 3, 1) / axis_proj(3, 3);
+        x0 = floor((0.5f + v0(0)) * scene->width);
+        y0 = floor((0.5f - v0(1)) * scene->height);
+        x1 = floor((0.5f + v1(0)) * scene->width);
+        y1 = floor((0.5f - v1(1)) * scene->height);
+        if (x0 >= 0 && x0 < scene->width && x1 >= 0 && x1 < scene->width &&
+            y0 >= 0 && y0 < scene->height && y1 >= 0 && y1 < scene->height) {
+            scene->window.draw_line(x0, y0, x1, y1, Color(0, 0, 255));
         }
     }
     void loop() {

@@ -45,12 +45,12 @@ class Window : public Fl_Window {
             return 1;
         case FL_DRAG:
             if (Fl::event_button() == FL_LEFT_MOUSE) {
-                dx = (Fl::event_x() - last_x) * (float)ROTATE_RATIO;
-                dy = (Fl::event_y() - last_y) * (float)ROTATE_RATIO;
+                dx = -(Fl::event_x() - last_x) * (float)ROTATE_RATIO;
+                dy = -(Fl::event_y() - last_y) * (float)ROTATE_RATIO;
                 camera->rotate(dx, dy);
             } else if (Fl::event_button() == FL_RIGHT_MOUSE) {
-                dx = (Fl::event_x() - last_x) * (float)TRANS_RATIO;
-                dy = (Fl::event_y() - last_y) * (float)TRANS_RATIO;
+                dx = -(Fl::event_x() - last_x) * (float)TRANS_RATIO;
+                dy = +(Fl::event_y() - last_y) * (float)TRANS_RATIO;
                 camera->translate(dx, dy);
             }
             last_x = Fl::event_x();

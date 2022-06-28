@@ -17,7 +17,7 @@ class Scene {
     std::vector<TriangleMesh> objects;
     Scene(Json::Value config)
         : window(800, 600),
-          camera(Eigen::Vector3f(0, 0, 1.5), Eigen::Quaternionf::Identity(),
+          camera(Eigen::Vector3f(0, 0, 3), Eigen::Quaternionf::Identity(),
                  800.0f / 600),
           width(800), height(600) {
         framebuf = window.framebuf;

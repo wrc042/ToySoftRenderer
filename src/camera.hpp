@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include <Eigen/Dense>
+#include <iostream>
 
 class Camera {
   public:
@@ -31,7 +32,8 @@ class Camera {
         right = rotation.matrix() * Eigen::Vector3f::UnitX();
         dir = rotation.matrix() * -Eigen::Vector3f::UnitZ();
         pos = rotation.matrix() * translation;
-        target = rotation.matrix() * (-pos) + pos;
+        // target = rotation.matrix() * (-pos) + pos;
+        target = Eigen::Vector3f::Zero();
         update_extrinsic();
         update_proj_mat();
     }
@@ -43,21 +45,21 @@ class Camera {
         right = rotation.matrix() * Eigen::Vector3f::UnitX();
         dir = rotation.matrix() * -Eigen::Vector3f::UnitZ();
         pos = target - dir * radius;
-        translation = rotation.inverse().matrix() * pos;
+        translation = pos;
         update_extrinsic();
     }
     void translate(const float dx, const float dy) {
         float radius = (pos - target).norm();
-        target += radius * (-dy * up + dx * right);
+        target += radius * (dy * up + dx * right);
         pos = target - dir * radius;
-        translation = rotation.inverse().matrix() * pos;
+        translation = pos;
         update_extrinsic();
     }
     void scale(const float scale_) {
         float radius = (pos - target).norm();
         radius *= std::exp(scale_);
         pos = target - dir * radius;
-        translation = rotation.inverse().matrix() * pos;
+        translation = pos;
         update_extrinsic();
     }
 
