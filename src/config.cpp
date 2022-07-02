@@ -53,6 +53,10 @@ Json::Value parse_args(std::string config_file = "config.json") {
     config_std["camera"]["rotation"]["x"] = 0;
     config_std["camera"]["rotation"]["y"] = 0;
     config_std["camera"]["rotation"]["z"] = 0;
+    config_std["camera"]["fix"] = false;
+    config_std["camera"]["z_near"] = 0.1f;
+    config_std["camera"]["z_far"] = 1000.0f;
+    config_std["camera"]["fovy"] = 0.25f * PI_;
 
     update(config, config_std);
 

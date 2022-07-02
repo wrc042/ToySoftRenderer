@@ -6,13 +6,17 @@
 
 class Camera {
   public:
+    bool fix;
+    float z_near, z_far;
     Eigen::Matrix4f extrinsic;
     Eigen::Matrix4f proj_mat;
 
-    Camera(Eigen::Vector3f T, Eigen::Quaternionf R, float aspect_ = 1.0f,
-           float fovY_ = 0.25f * PI_, float z_near_ = 0.1f,
-           float z_far_ = 1000.0f)
-        : fovY(fovY_), aspect(aspect_), z_near(z_near_), z_far(z_far_) {
+    Camera(Eigen::Vector3f T = Eigen::Vector3f::Zero(),
+           Eigen::Quaternionf R = Eigen::Quaternionf::Identity(),
+           float aspect_ = 1.0f, bool fix_ = false, float fovY_ = 0.25f * PI_,
+           float z_near_ = 0.1f, float z_far_ = 1000.0f)
+        : fovY(fovY_), aspect(aspect_), z_near(z_near_), z_far(z_far_),
+          fix(fix_) {
         rotation = R;
         translation = T;
         up = rotation.matrix() * Eigen::Vector3f::UnitY();
@@ -42,7 +46,6 @@ class Camera {
     Eigen::Vector3f pos;
 
     float fovY, aspect;
-    float z_near, z_far;
     void update_proj_mat();
     void update_extrinsic();
 };

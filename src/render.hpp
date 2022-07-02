@@ -16,6 +16,7 @@ class Renderer {
 class Wireframe : public Renderer {
   public:
     Scene *scene;
+    bool with_axis;
     Eigen::Matrix<float, 4, Eigen::Dynamic> vertices;
     Eigen::Matrix<float, 4, Eigen::Dynamic> vertices_proj;
     std::vector<Face> faces;
@@ -23,4 +24,5 @@ class Wireframe : public Renderer {
     Wireframe(Scene *scene_);
     void render();
     void loop();
+    void draw_axis();
 };

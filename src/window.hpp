@@ -30,7 +30,7 @@ class Window : public Fl_Window {
         show();
     }
     int handle(int event) {
-        if (!camera) {
+        if (!camera || camera->fix) {
             return Fl_Window::handle(event);
         }
         float offset, dx, dy;
