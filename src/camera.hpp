@@ -6,19 +6,6 @@
 
 class Camera {
   public:
-    Eigen::Quaternionf rotation;
-    Eigen::Vector3f translation;
-
-    Eigen::Vector3f up;
-    Eigen::Vector3f right;
-    Eigen::Vector3f dir;
-
-    Eigen::Vector3f target;
-    Eigen::Vector3f pos;
-
-    float fovY, aspect;
-    float z_near, z_far;
-
     Eigen::Matrix4f extrinsic;
     Eigen::Matrix4f proj_mat;
 
@@ -32,38 +19,30 @@ class Camera {
         right = rotation.matrix() * Eigen::Vector3f::UnitX();
         dir = rotation.matrix() * -Eigen::Vector3f::UnitZ();
         pos = rotation.matrix() * translation;
-        // target = rotation.matrix() * (-pos) + pos;
-        target = Eigen::Vector3f::Zero();
+        target = pos + rotation.inverse().matrix() * (-pos);
         update_extrinsic();
         update_proj_mat();
     }
-    void rotate(const float dx, const float dy) {
-        float radius = (pos - target).norm();
-        rotation =
-            Eigen::AngleAxisf(dx, up) * Eigen::AngleAxisf(dy, right) * rotation;
-        up = rotation.matrix() * Eigen::Vector3f::UnitY();
-        right = rotation.matrix() * Eigen::Vector3f::UnitX();
-        dir = rotation.matrix() * -Eigen::Vector3f::UnitZ();
-        pos = target - dir * radius;
-        translation = pos;
-        update_extrinsic();
-    }
-    void translate(const float dx, const float dy) {
-        float radius = (pos - target).norm();
-        target += radius * (dy * up + dx * right);
-        pos = target - dir * radius;
-        translation = pos;
-        update_extrinsic();
-    }
-    void scale(const float scale_) {
-        float radius = (pos - target).norm();
-        radius *= std::exp(scale_);
-        pos = target - dir * radius;
-        translation = pos;
-        update_extrinsic();
-    }
+    void view_rotate(const float dx, const float dy);
+    void view_translate(const float dx, const float dy);
+    void view_scale(const float scale_);
+    void set_rotation(Eigen::Quaternionf R);
+    void set_translation(Eigen::Vector3f T);
+    void set_pose(Eigen::Quaternionf R, Eigen::Vector3f T);
 
   private:
+    Eigen::Quaternionf rotation;
+    Eigen::Vector3f translation;
+
+    Eigen::Vector3f up;
+    Eigen::Vector3f right;
+    Eigen::Vector3f dir;
+
+    Eigen::Vector3f target;
+    Eigen::Vector3f pos;
+
+    float fovY, aspect;
+    float z_near, z_far;
     void update_proj_mat();
     void update_extrinsic();
 };

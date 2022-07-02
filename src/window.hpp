@@ -37,7 +37,7 @@ class Window : public Fl_Window {
         switch (event) {
         case FL_MOUSEWHEEL:
             offset = Fl::event_dy() / (float)WHEEL_RATIO;
-            camera->scale(offset);
+            camera->view_scale(offset);
             return 1;
         case FL_PUSH:
             last_x = Fl::event_x();
@@ -47,11 +47,11 @@ class Window : public Fl_Window {
             if (Fl::event_button() == FL_LEFT_MOUSE) {
                 dx = -(Fl::event_x() - last_x) * (float)ROTATE_RATIO;
                 dy = -(Fl::event_y() - last_y) * (float)ROTATE_RATIO;
-                camera->rotate(dx, dy);
+                camera->view_rotate(dx, dy);
             } else if (Fl::event_button() == FL_RIGHT_MOUSE) {
                 dx = -(Fl::event_x() - last_x) * (float)TRANS_RATIO;
                 dy = +(Fl::event_y() - last_y) * (float)TRANS_RATIO;
-                camera->translate(dx, dy);
+                camera->view_translate(dx, dy);
             }
             last_x = Fl::event_x();
             last_y = Fl::event_y();

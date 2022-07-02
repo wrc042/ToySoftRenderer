@@ -1,6 +1,18 @@
 {
-   "screen" : {
-      "height" : 600,
-      "width" : 800
+   "camera": {
+      "rotation": {
+         "x": 0,
+         "y": 0,
+         "z": 0
+      },
+      "translation": {
+         "x": 0,
+         "y": 0,
+         "z": 6
+      }
+   },
+   "screen": {
+      "height": 600,
+      "width": 800
    }
 }

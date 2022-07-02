@@ -18,11 +18,25 @@ class Scene {
     Scene(Json::Value config)
         : window(config["screen"]["width"].asInt(),
                  config["screen"]["height"].asInt()),
-          camera(Eigen::Vector3f(0, 0, 6), Eigen::Quaternionf::Identity(),
-                 config["screen"]["width"].asFloat() /
-                     config["screen"]["height"].asFloat()),
           width(config["screen"]["width"].asInt()),
-          height(config["screen"]["height"].asInt()) {
+          height(config["screen"]["height"].asInt()),
+          camera(Eigen::Vector3f::Zero(), Eigen::Quaternionf::Identity(),
+                 config["screen"]["width"].asFloat() /
+                     config["screen"]["height"].asFloat()) {
+        Eigen::Vector3f T(config["camera"]["translation"]["x"].asFloat(),
+                          config["camera"]["translation"]["y"].asFloat(),
+                          config["camera"]["translation"]["z"].asFloat());
+        Eigen::Quaternionf R =
+            Eigen::AngleAxisf(config["camera"]["rotation"]["z"].asFloat() /
+                                  180 * PI_,
+                              Eigen::Vector3f::UnitZ()) *
+            Eigen::AngleAxisf(config["camera"]["rotation"]["y"].asFloat() /
+                                  180 * PI_,
+                              Eigen::Vector3f::UnitY()) *
+            Eigen::AngleAxisf(config["camera"]["rotation"]["x"].asFloat() /
+                                  180 * PI_,
+                              Eigen::Vector3f::UnitX());
+        camera.set_pose(R, T);
         framebuf = window.framebuf;
         window.set_camera(&camera);
     }
