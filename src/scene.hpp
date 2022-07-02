@@ -16,10 +16,13 @@ class Scene {
     uchar *framebuf;
     std::vector<TriangleMesh> objects;
     Scene(Json::Value config)
-        : window(800, 600),
-          camera(Eigen::Vector3f(0, 0, 3), Eigen::Quaternionf::Identity(),
-                 800.0f / 600),
-          width(800), height(600) {
+        : window(config["screen"]["width"].asInt(),
+                 config["screen"]["height"].asInt()),
+          camera(Eigen::Vector3f(0, 0, 6), Eigen::Quaternionf::Identity(),
+                 config["screen"]["width"].asFloat() /
+                     config["screen"]["height"].asFloat()),
+          width(config["screen"]["width"].asInt()),
+          height(config["screen"]["height"].asInt()) {
         framebuf = window.framebuf;
         window.set_camera(&camera);
     }

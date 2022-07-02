@@ -62,11 +62,11 @@ class Window : public Fl_Window {
     }
     void set_camera(Camera *camera_) { camera = camera_; }
     void flush_screen() {
-        fl_draw_image(framebuf, 0, 0, 800, 600);
+        fl_draw_image(framebuf, 0, 0, width, height);
         Fl::check();
     };
     void flush_screen_wait() {
-        fl_draw_image(framebuf, 0, 0, 800, 600);
+        fl_draw_image(framebuf, 0, 0, width, height);
         Fl::wait();
     };
     void draw_point(int x, int y, Color &color) {
