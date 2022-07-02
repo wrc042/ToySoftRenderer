@@ -39,6 +39,9 @@ class Scene {
         camera.set_pose(R, T);
         framebuf = window.framebuf;
         window.set_camera(&camera);
+        for (auto object : config["objects"]) {
+            objects.push_back(TriangleMesh(object["path"].asString()));
+        }
     }
     void add_object(std::string mesh_file) {
         objects.push_back(TriangleMesh(mesh_file));

@@ -17,7 +17,6 @@ int main(int argc, char **argv) {
     if (args["help"].count() == 0) {
         Json::Value config = parse_args(args["config"].as<std::string>());
         Scene scene(config);
-        scene.add_object("suzanne.obj");
         Renderer *renderer = new Wireframe(&scene);
         renderer->loop();
     } else {

@@ -14,5 +14,10 @@
    "screen": {
       "height": 600,
       "width": 800
-   }
+   },
+   "objects": [
+      {
+         "path": "suzanne.obj"
+      }
+   ]
 }

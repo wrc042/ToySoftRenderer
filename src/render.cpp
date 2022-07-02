@@ -26,19 +26,22 @@ void save_png(const char *filename, uchar *framebuffer, unsigned width,
 }
 
 Wireframe::Wireframe(Scene *scene_) : scene(scene_) {
+    vertices.resize(4, 0);
     int offset = 0;
     std::set<std::pair<int, int>> edge_set;
     for (auto &object : (scene->objects)) {
-        int old_size = vertices.cols();
-        offset += old_size;
         Eigen::VectorXf tmpv(object.vertices.cols());
         tmpv.setOnes();
-        vertices.resize(4, vertices.cols() + (object.vertices).cols());
-        vertices.block(0, old_size, 3, object.vertices.cols()) =
+        Eigen::Matrix<float, 4, Eigen::Dynamic> vertices_;
+        vertices_.resize(4, vertices.cols() + (object.vertices).cols());
+        vertices_.leftCols(vertices.cols()) = vertices;
+        vertices_.rightCols(object.vertices.cols()).topRows(3) =
             object.vertices;
-        vertices.rightCols(object.vertices.cols()).bottomRows(1) =
+        vertices_.rightCols(object.vertices.cols()).bottomRows(1) =
             tmpv.transpose();
-        for (auto &face : object.faces) {
+        vertices = vertices_;
+        for (auto face : object.faces) {
+            face = face + offset;
             faces.push_back(face + offset);
             int v0, v1;
             std::pair<int, int> tmp_pair;
@@ -64,6 +67,7 @@ Wireframe::Wireframe(Scene *scene_) : scene(scene_) {
                 edges.push_back(tmp_pair);
             }
         }
+        offset = vertices.cols();
     }
 }
 
@@ -124,10 +128,16 @@ void Wireframe::render() {
 }
 
 void Wireframe::loop() {
+    // static clock_t last_clock = clock();
     while (1) {
         vertices_proj =
             scene->camera.proj_mat * scene->camera.extrinsic * vertices;
         render();
+        // clock_t now_clock = clock();
+        // std::cout << "FPS: " << 1.0f * CLOCKS_PER_SEC / (now_clock -
+        // last_clock)
+        //   << std::endl;
+        // last_clock = now_clock;
         scene->window.flush_screen_wait();
         if (!scene->window.shown()) {
             break;

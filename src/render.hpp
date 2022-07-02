@@ -2,6 +2,7 @@
 
 #include "lodepng.h"
 #include "scene.hpp"
+#include <ctime>
 #include <iostream>
 #include <set>
 
