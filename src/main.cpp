@@ -10,15 +10,18 @@
 
 int main(int argc, char **argv) {
     cxxopts::Options options("ToySoftRenderer", "Just for fun:)");
-    options.add_options()(
-        "c,config", "config as .json",
-        cxxopts::value<std::string>()->default_value("config.json"));
+    options.add_options()("c,config", "config as .json",
+                          cxxopts::value<std::string>()->default_value(
+                              "config.json"))("h,help", "print usage");
     auto args = options.parse(argc, argv);
-    Json::Value config = parse_args(args["config"].as<std::string>());
-    Scene scene(config);
-    scene.add_object("suzanne.obj");
-    Renderer *renderer = new Wireframe(&scene);
-    renderer->loop();
+    if (args["help"].count() == 0) {
+        Json::Value config = parse_args(args["config"].as<std::string>());
+        Scene scene(config);
+        Renderer *renderer = new Wireframe(&scene);
+        renderer->loop();
+    } else {
+        std::cout << options.help() << std::endl;
+    }
 
     return 0;
 }

@@ -30,14 +30,14 @@ class Window : public Fl_Window {
         show();
     }
     int handle(int event) {
-        if (!camera) {
+        if (!camera || camera->fix) {
             return Fl_Window::handle(event);
         }
         float offset, dx, dy;
         switch (event) {
         case FL_MOUSEWHEEL:
             offset = Fl::event_dy() / (float)WHEEL_RATIO;
-            camera->scale(offset);
+            camera->view_scale(offset);
             return 1;
         case FL_PUSH:
             last_x = Fl::event_x();
@@ -47,11 +47,11 @@ class Window : public Fl_Window {
             if (Fl::event_button() == FL_LEFT_MOUSE) {
                 dx = -(Fl::event_x() - last_x) * (float)ROTATE_RATIO;
                 dy = -(Fl::event_y() - last_y) * (float)ROTATE_RATIO;
-                camera->rotate(dx, dy);
+                camera->view_rotate(dx, dy);
             } else if (Fl::event_button() == FL_RIGHT_MOUSE) {
                 dx = -(Fl::event_x() - last_x) * (float)TRANS_RATIO;
                 dy = +(Fl::event_y() - last_y) * (float)TRANS_RATIO;
-                camera->translate(dx, dy);
+                camera->view_translate(dx, dy);
             }
             last_x = Fl::event_x();
             last_y = Fl::event_y();
@@ -62,11 +62,11 @@ class Window : public Fl_Window {
     }
     void set_camera(Camera *camera_) { camera = camera_; }
     void flush_screen() {
-        fl_draw_image(framebuf, 0, 0, 800, 600);
+        fl_draw_image(framebuf, 0, 0, width, height);
         Fl::check();
     };
     void flush_screen_wait() {
-        fl_draw_image(framebuf, 0, 0, 800, 600);
+        fl_draw_image(framebuf, 0, 0, width, height);
         Fl::wait();
     };
     void draw_point(int x, int y, Color &color) {
