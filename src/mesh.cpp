@@ -21,21 +21,48 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
         exit(0);
     }
 
-    vertices.resize(3, attrib.vertices.size() / 3);
-    for (int i = 0; i < vertices.cols(); i++) {
-        vertices.col(i)(0) = attrib.vertices[i * 3];
-        vertices.col(i)(1) = attrib.vertices[i * 3 + 1];
-        vertices.col(i)(2) = attrib.vertices[i * 3 + 2];
-    }
+    int vertice_cnt = 0;
+    int normal_cnt = 0;
+    std::map<int, int> vdict;
+    std::map<int, int> ndict;
+
     for (int i = 0; i < shapes[0].mesh.num_face_vertices.size(); i++) {
         if (shapes[0].mesh.num_face_vertices[i] != 3) {
             std::cout << "NOT TRIANGLE MESH: " << mesh_file << std::endl;
             exit(0);
         }
-        tinyobj::index_t idx0 = shapes[0].mesh.indices[i * 3 + 0];
-        tinyobj::index_t idx1 = shapes[0].mesh.indices[i * 3 + 1];
-        tinyobj::index_t idx2 = shapes[0].mesh.indices[i * 3 + 2];
-        faces.push_back(
-            Face(idx0.vertex_index, idx1.vertex_index, idx2.vertex_index));
+        tinyobj::index_t idx[3];
+        for (int v = 0; v < 3; v++)
+            idx[v] = shapes[0].mesh.indices[i * 3 + v];
+
+        int vidx[3];
+        for (int v = 0; v < 3; v++) {
+            if (vdict.count(idx[v].vertex_index) == 0)
+                vdict[idx[v].vertex_index] = vertice_cnt++;
+            vidx[v] = vdict[idx[v].vertex_index];
+        }
+        faces.push_back(Face(vidx[0], vidx[1], vidx[2]));
+        if (idx[0].normal_index < 0 || idx[1].normal_index < 0 ||
+            idx[2].normal_index < 0) {
+            std::cout << "LACK NORMAL INFOMATION: " << mesh_file << std::endl;
+            exit(0);
+        }
+        int nidx[3];
+        for (int v = 0; v < 3; v++) {
+            if (ndict.count(idx[v].normal_index) == 0)
+                ndict[idx[v].normal_index] = normal_cnt++;
+            nidx[v] = ndict[idx[v].normal_index];
+        }
+        face_normals.push_back(FaceNormal(nidx[0], nidx[1], nidx[2]));
+    }
+    vertices.resize(3, vertice_cnt);
+    normals.resize(3, normal_cnt);
+    for (auto &p : vdict) {
+        for (int v = 0; v < 3; v++)
+            vertices.col(p.second)(v) = attrib.vertices[p.first * 3 + v];
+    }
+    for (auto &p : ndict) {
+        for (int v = 0; v < 3; v++)
+            normals.col(p.second)(v) = attrib.normals[p.first * 3 + v];
     }
 }

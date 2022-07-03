@@ -1,4 +1,5 @@
 #define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
+#define TINYOBJLOADER_USE_MAPBOX_EARCUT
 
 #include "config.hpp"
 #include "cxxopts.hpp"
@@ -17,7 +18,8 @@ int main(int argc, char **argv) {
     if (args["help"].count() == 0) {
         Json::Value config = parse_args(args["config"].as<std::string>());
         Scene scene(config);
-        Renderer *renderer = new Wireframe(&scene);
+        // Renderer *renderer = new Wireframe(&scene);
+        Renderer *renderer = new Shading(&scene);
         renderer->loop();
     } else {
         std::cout << options.help() << std::endl;
