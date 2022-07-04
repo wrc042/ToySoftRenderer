@@ -18,7 +18,6 @@ class Wireframe : public Renderer {
     Scene *scene;
     bool with_axis;
     Eigen::Matrix<float, 4, Eigen::Dynamic> vertices;
-    Eigen::Matrix<float, 4, Eigen::Dynamic> vertices_proj;
     std::vector<std::pair<int, int>> edges;
     Wireframe(Scene *scene_);
     void render();
@@ -31,8 +30,6 @@ class Shading : public Renderer {
     Scene *scene;
     float *z_buffer;
     Eigen::Matrix<float, 4, Eigen::Dynamic> vertices;
-    Eigen::Matrix<float, 4, Eigen::Dynamic> vertices_ex;
-    Eigen::Matrix<float, 4, Eigen::Dynamic> vertices_proj;
     Eigen::Matrix<float, 3, Eigen::Dynamic> normals;
     std::vector<Face> faces;
     std::vector<FaceNormal> face_normals;

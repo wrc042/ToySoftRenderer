@@ -108,13 +108,15 @@ void Wireframe::draw_axis() {
 }
 
 void Wireframe::render() {
-    vertices_proj = scene->camera.proj_mat * scene->camera.extrinsic * vertices;
+    Eigen::Matrix<float, 4, Eigen::Dynamic> verts_proj;
     scene->window.fill_background(Color(120, 120, 120));
     for (auto &edge : edges) {
-        Eigen::Vector3f v0 = vertices_proj.block(0, edge.first, 3, 1) /
-                             vertices_proj(3, edge.first);
-        Eigen::Vector3f v1 = vertices_proj.block(0, edge.second, 3, 1) /
-                             vertices_proj(3, edge.second);
+        verts_proj = scene->camera.proj_mat * scene->camera.extrinsic *
+                     vertices.col(edge.first);
+        Eigen::Vector3f v0 = verts_proj.topRows(3) / verts_proj(3, 0);
+        verts_proj = scene->camera.proj_mat * scene->camera.extrinsic *
+                     vertices.col(edge.second);
+        Eigen::Vector3f v1 = verts_proj.topRows(3) / verts_proj(3, 0);
         int x0, y0, x1, y1;
         x0 = floor((0.5f + v0(0)) * scene->width);
         y0 = floor((0.5f - v0(1)) * scene->height);
@@ -179,18 +181,18 @@ Shading::Shading(Scene *scene_) : scene(scene_) {
 void Shading::render() {
     for (int i = 0; i < scene->width * scene->height; i++)
         z_buffer[i] = -std::numeric_limits<float>::infinity();
-    vertices_proj = scene->camera.proj_mat * scene->camera.extrinsic * vertices;
-    vertices_ex = scene->camera.extrinsic * vertices;
     scene->window.fill_background(Color(0, 0, 0));
     for (int i = 0; i < faces.size(); i++) {
+        Eigen::Vector4f verts_proj_[3];
         Eigen::Vector3f verts_proj[3];
+        Eigen::Vector4f verts_[3];
         Eigen::Vector3f verts[3];
         Eigen::Vector3f norms[3];
         for (int v = 0; v < 3; v++) {
-            verts_proj[v] = vertices_proj.block(0, faces[i][v], 3, 1) /
-                            vertices_proj(3, faces[i][v]);
-            verts[v] = vertices_ex.block(0, faces[i][v], 3, 1) /
-                       vertices_ex(3, faces[i][v]);
+            verts_[v] = scene->camera.extrinsic * vertices.col(faces[i][v]);
+            verts_proj_[v] = scene->camera.proj_mat * verts_[v];
+            verts_proj[v] = verts_proj_[v].topRows(3) / verts_proj_[v](3, 0);
+            verts[v] = verts_[v].topRows(3) / verts_[v](3, 0);
             norms[v] = normals.col(face_normals[i][v]);
         }
         float x0, y0, x1, y1, x2, y2;
@@ -222,33 +224,16 @@ void Shading::render() {
                              verts[0][2] * (verts[2][2] - verts[1][2]) * t1);
                 float t0_ = verts[1][2] * verts[2][2] * t0 / tmp;
                 float t1_ = verts[0][2] * verts[2][2] * t1 / tmp;
-                // float z_inter = t0_ * verts[0][2] + t1_ * verts[1][2] +
-                //                 (1 - t0_ - t1_) * verts[2][2];
-                float z_inter = t0 * verts[0][2] + t1 * verts[1][2] +
-                                (1 - t0 - t1) * verts[2][2];
+                float z_inter = t0_ * verts[0][2] + t1_ * verts[1][2] +
+                                (1 - t0_ - t1_) * verts[2][2];
                 if (z_inter < z_buffer[i + j * scene->width])
                     continue;
                 z_buffer[i + j * scene->width] = z_inter;
+                Eigen::Vector3f norm_inter = t0_ * norms[0] + t1_ * norms[1] +
+                                             (1 - t0_ - t1_) * norms[2];
+                norm_inter = norm_inter.normalized().cwiseAbs();
+                scene->window.draw_point(i, j, Color(norm_inter));
             }
-        }
-    }
-    float z_min = std::numeric_limits<float>::infinity(),
-          z_max = -std::numeric_limits<float>::infinity();
-    for (int i = 0; i < scene->width * scene->height; i++) {
-        if (isinf(z_buffer[i]))
-            continue;
-        z_min = std::min(z_buffer[i], z_min);
-        z_max = std::max(z_buffer[i], z_max);
-    }
-    float scale = z_max - z_min;
-    for (int i = 0; i < scene->width * scene->height; i++) {
-        if (isinf(z_buffer[i])) {
-            scene->window.draw_point(i % scene->width, i / scene->width,
-                                     Color(0, 0, 255));
-        } else {
-            int c = floor(((z_max - z_buffer[i]) / scale) * 255);
-            scene->window.draw_point(i % scene->width, i / scene->width,
-                                     Color(c, c, c));
         }
     }
 }
