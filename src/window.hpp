@@ -6,18 +6,13 @@
 #include "FL/Fl_Window.H"
 #include "FL/fl_draw.H"
 #include "camera.hpp"
+#include "image.hpp"
 #include "json/json.h"
 #include <iostream>
 
 #define WHEEL_RATIO 60
 #define ROTATE_RATIO 0.25f * PI_ / 180.0f
 #define TRANS_RATIO 0.0005f
-
-struct Color {
-    uchar r, g, b;
-    Color(uchar r_ = uchar(0), uchar g_ = uchar(0), uchar b_ = uchar(0))
-        : r(r_), g(g_), b(b_) {}
-};
 
 class Window : public Fl_Window {
   public:

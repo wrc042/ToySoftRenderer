@@ -1,5 +1,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "config.hpp"
 #include "cxxopts.hpp"

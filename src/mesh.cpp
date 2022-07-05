@@ -7,8 +7,10 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
     std::string warn;
     std::string err;
 
+    std::string mesh_root = mesh_file.substr(0, mesh_file.find_last_of("/"));
+
     bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
-                                mesh_file.c_str());
+                                mesh_file.c_str(), mesh_root.c_str());
 
     if (!warn.empty()) {
         std::cout << warn << std::endl;
@@ -20,11 +22,27 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
         std::cout << "ERROR WHEN LOADING " << mesh_file << std::endl;
         exit(0);
     }
+    if (!materials.empty()) {
+        if (!materials[0].diffuse_texname.empty()) {
+            diffuse_map.set_path(mesh_root + "/" +
+                                 materials[0].diffuse_texname);
+        }
+        // std::cout << mesh_root + "/" + materials[0].diffuse_texname
+        //           << std::endl;
+        // std::cout << mesh_root + "/" + materials[0].ambient_texname
+        //           << std::endl;
+        // std::cout << mesh_root + "/" + materials[0].specular_texname
+        //           << std::endl;
+        // std::cout << mesh_root + "/" + materials[0].bump_texname <<
+        // std::endl;
+    }
 
     int vertice_cnt = 0;
     int normal_cnt = 0;
+    int uv_cnt = 0;
     std::map<int, int> vdict;
     std::map<int, int> ndict;
+    std::map<int, int> uvdict;
 
     for (int i = 0; i < shapes[0].mesh.num_face_vertices.size(); i++) {
         if (shapes[0].mesh.num_face_vertices[i] != 3) {
@@ -41,9 +59,8 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
                 vdict[idx[v].vertex_index] = vertice_cnt++;
             vidx[v] = vdict[idx[v].vertex_index];
         }
-        faces.push_back(Face(vidx[0], vidx[1], vidx[2]));
-        if (idx[0].normal_index < 0 || idx[1].normal_index < 0 ||
-            idx[2].normal_index < 0) {
+        face_verts.push_back(FaceIndex(vidx[0], vidx[1], vidx[2]));
+        if (idx[0].normal_index < 0) {
             std::cout << "LACK NORMAL INFOMATION: " << mesh_file << std::endl;
             exit(0);
         }
@@ -53,10 +70,18 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
                 ndict[idx[v].normal_index] = normal_cnt++;
             nidx[v] = ndict[idx[v].normal_index];
         }
-        face_normals.push_back(FaceNormal(nidx[0], nidx[1], nidx[2]));
+        face_norms.push_back(FaceIndex(nidx[0], nidx[1], nidx[2]));
+        int uvidx[3];
+        for (int v = 0; v < 3; v++) {
+            if (uvdict.count(idx[v].texcoord_index) == 0)
+                uvdict[idx[v].texcoord_index] = uv_cnt++;
+            uvidx[v] = uvdict[idx[v].texcoord_index];
+        }
+        face_uvs.push_back(FaceIndex(uvidx[0], uvidx[1], uvidx[2]));
     }
     vertices.resize(3, vertice_cnt);
     normals.resize(3, normal_cnt);
+    uvs.resize(2, uv_cnt);
     for (auto &p : vdict) {
         for (int v = 0; v < 3; v++)
             vertices.col(p.second)(v) = attrib.vertices[p.first * 3 + v];
@@ -64,5 +89,9 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
     for (auto &p : ndict) {
         for (int v = 0; v < 3; v++)
             normals.col(p.second)(v) = attrib.normals[p.first * 3 + v];
+    }
+    for (auto &p : uvdict) {
+        for (int v = 0; v < 2; v++)
+            uvs.col(p.second)(v) = attrib.texcoords[p.first * 2 + v];
     }
 }

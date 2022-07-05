@@ -1,6 +1,5 @@
 #pragma once
 
-#include "lodepng.h"
 #include "scene.hpp"
 #include <ctime>
 #include <iostream>
@@ -29,10 +28,6 @@ class Shading : public Renderer {
   public:
     Scene *scene;
     float *z_buffer;
-    Eigen::Matrix<float, 4, Eigen::Dynamic> vertices;
-    Eigen::Matrix<float, 3, Eigen::Dynamic> normals;
-    std::vector<Face> faces;
-    std::vector<FaceNormal> face_normals;
     Shading(Scene *scene_);
     void render();
     void loop();
