@@ -1,7 +1,7 @@
 {
    "render": {
       "mode": "wireframe",
-      "axis": false
+      "axis": true
    },
    "camera": {
       "fix": false,
@@ -9,14 +9,14 @@
       "z_near": 0.1,
       "z_far": 1000,
       "rotation": {
-         "x": 65,
+         "x": 0,
          "y": 0,
-         "z": 200
+         "z": 0
       },
       "translation": {
-         "x": -4,
-         "y": 13,
-         "z": 5
+         "x": 0,
+         "y": 0,
+         "z": 6
       }
    },
    "screen": {
@@ -25,7 +25,22 @@
    },
    "objects": [
       {
-         "path": "examples/Apricot/Apricot_02_hi_poly.obj"
+         "path": "sphere.obj"
+      }
+   ],
+   "lights": [
+      {
+         "type": "point",
+         "translation": {
+            "x": 6,
+            "y": 6,
+            "z": 6
+         },
+         "intensity": [
+            50,
+            50,
+            50
+         ]
       }
    ]
 }

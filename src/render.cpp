@@ -107,6 +107,7 @@ void Wireframe::render() {
 }
 
 void Wireframe::loop() {
+    scene->window.show();
     // static clock_t last_clock = clock();
     while (1) {
         render();
@@ -124,13 +125,17 @@ void Wireframe::loop() {
 
 Shading::Shading(Scene *scene_) : scene(scene_) {
     z_buffer = new float[scene->width * scene->height];
-    for (auto &object : scene->objects)
+    for (auto &object : scene->objects) {
         object.diffuse_map.load();
+        object.ambient_map.load();
+        object.specular_map.load();
+        object.normal_map.load();
+    }
 }
 
 void Shading::render() {
     for (int i = 0; i < scene->width * scene->height; i++)
-        z_buffer[i] = -std::numeric_limits<float>::infinity();
+        z_buffer[i] = -scene->camera.z_far;
     scene->window.fill_background(Color(0, 0, 0));
     for (auto &object : scene->objects) {
         Eigen::Matrix<float, 4, Eigen::Dynamic> vertices_;
@@ -140,17 +145,19 @@ void Shading::render() {
         for (int i = 0; i < object.face_verts.size(); i++) {
             Eigen::Vector4f verts_proj_[3];
             Eigen::Vector3f verts_proj[3];
-            Eigen::Vector4f verts_[3];
+            Eigen::Vector4f verts_ca_[3];
+            Eigen::Vector3f verts_ca[3];
             Eigen::Vector3f verts[3];
             Eigen::Vector3f norms[3];
             Eigen::Vector2f uvs[3];
             for (int v = 0; v < 3; v++) {
-                verts_[v] = scene->camera.extrinsic *
-                            vertices_.col(object.face_norms[i][v]);
-                verts_proj_[v] = scene->camera.proj_mat * verts_[v];
+                verts[v] = vertices_.col(object.face_verts[i][v]).topRows(3);
+                verts_ca_[v] = scene->camera.extrinsic *
+                               vertices_.col(object.face_verts[i][v]);
+                verts_proj_[v] = scene->camera.proj_mat * verts_ca_[v];
                 verts_proj[v] =
                     verts_proj_[v].topRows(3) / verts_proj_[v](3, 0);
-                verts[v] = verts_[v].topRows(3) / verts_[v](3, 0);
+                verts_ca[v] = verts_ca_[v].topRows(3) / verts_ca_[v](3, 0);
                 norms[v] = object.normals.col(object.face_norms[i][v]);
                 uvs[v](0) = object.uvs.col(object.face_uvs[i][v])(0);
                 uvs[v](1) = object.uvs.col(object.face_uvs[i][v])(1);
@@ -172,35 +179,69 @@ void Shading::render() {
             Eigen::Vector2f v(x1 - x2, y1 - y2);
             for (int i = x_min; i < x_max; i++) {
                 for (int j = y_min; j < y_max; j++) {
-                    Eigen::Vector2f p(i + 0.5f - x2, j + 0.5f - y2);
-                    float t0 = (p(0) * v(1) - p(1) * v(0)) /
-                               (u(0) * v(1) - u(1) * v(0));
-                    float t1 = (p(0) * u(1) - p(1) * u(0)) /
-                               (v(0) * u(1) - v(1) * u(0));
+                    float tmp = u(0) * v(1) - u(1) * v(0);
+                    // Eigen::Vector2f p(i + 0.5f - x2, j + 0.5f - y2);
+                    // float t0 = (p(0) * v(1) - p(1) * v(0)) / tmp;
+                    // float t1 = (p(0) * u(1) - p(1) * u(0)) / -tmp;
+                    Eigen::Vector2f p(-(j + 0.5f - y2), i + 0.5f - x2);
+                    float t0 = (p.dot(v)) / tmp;
+                    float t1 = (p.dot(u)) / -tmp;
                     if ((t0 < 0.0f) || (t1 < 0.0f) || ((1 - t1 - t0) < 0.0f))
                         continue;
-                    float tmp =
-                        (verts[0][2] * verts[1][2] +
-                         verts[1][2] * (verts[2][2] - verts[0][2]) * t0 +
-                         verts[0][2] * (verts[2][2] - verts[1][2]) * t1);
-                    float t0_ = verts[1][2] * verts[2][2] * t0 / tmp;
-                    float t1_ = verts[0][2] * verts[2][2] * t1 / tmp;
-                    float z_inter = t0_ * verts[0][2] + t1_ * verts[1][2] +
-                                    (1 - t0_ - t1_) * verts[2][2];
-                    if (z_inter < z_buffer[i + j * scene->width])
+                    tmp = (verts_ca[0][2] * verts_ca[1][2] +
+                           verts_ca[1][2] * (verts_ca[2][2] - verts_ca[0][2]) *
+                               t0 +
+                           verts_ca[0][2] * (verts_ca[2][2] - verts_ca[1][2]) *
+                               t1);
+                    float t0_ = verts_ca[1][2] * verts_ca[2][2] * t0 / tmp;
+                    float t1_ = verts_ca[0][2] * verts_ca[2][2] * t1 / tmp;
+                    float z_inter = t0_ * verts_ca[0][2] +
+                                    t1_ * verts_ca[1][2] +
+                                    (1 - t0_ - t1_) * verts_ca[2][2];
+                    if (z_inter < z_buffer[i + j * scene->width] ||
+                        z_inter > scene->camera.z_near)
                         continue;
                     z_buffer[i + j * scene->width] = z_inter;
-                    Eigen::Vector2f uv_inter =
-                        t0 * uvs[0] + t1 * uvs[1] + (1 - t0 - t1) * uvs[2];
-                    scene->window.draw_point(
-                        i, j,
-                        Color(object.diffuse_map.get_pixel_bilinear(
-                            uv_inter(0), 1 - uv_inter(1))));
+                    // Eigen::Vector2f uv_inter =
+                    //     t0 * uvs[0] + t1 * uvs[1] + (1 - t0 - t1) * uvs[2];
+                    // scene->window.draw_point(
+                    //     i, j,
+                    //     Color(object.diffuse_map.get_pixel_bilinear(
+                    //         uv_inter(0), 1 - uv_inter(1))));
                     // Eigen::Vector3f norm_inter = t0_ * norms[0] +
                     //                              t1_ * norms[1] +
                     //                              (1 - t0_ - t1_) * norms[2];
                     // norm_inter = norm_inter.normalized().cwiseAbs();
                     // scene->window.draw_point(i, j, Color(norm_inter));
+                    Eigen::Vector3f color(0, 0, 0);
+                    Eigen::Vector3f kd(0.8, 0.8, 0.8);
+                    Eigen::Vector3f ks(0.8, 0.8, 0.8);
+                    for (auto &light : scene->lights) {
+                        if (light->type == POINT) {
+                            Eigen::Vector3f norm_inter =
+                                (t0_ * norms[0] + t1_ * norms[1] +
+                                 (1 - t0_ - t1_) * norms[2])
+                                    .normalized();
+                            Eigen::Vector3f vert_inter =
+                                t0_ * verts[0] + t1_ * verts[1] +
+                                (1 - t0_ - t1_) * verts[2];
+                            Eigen::Vector3f dlight = light->pos - vert_inter;
+                            Eigen::Vector3f dir_light = dlight.normalized();
+                            Eigen::Vector3f dir_view =
+                                (scene->camera.pos - vert_inter).normalized();
+                            float r2 = dlight.dot(dlight);
+
+                            float ang = dir_light.dot(norm_inter);
+                            color += kd.cwiseProduct(((light->intensity) / r2) *
+                                                     std::max(ang, 0.f));
+                            Eigen::Vector3f h =
+                                ((dir_light + dir_view) / 2).normalized();
+                            ang = std::pow(norm_inter.dot(h), 150);
+                            color += ks.cwiseProduct(((light->intensity) / r2) *
+                                                     std::max(ang, 0.f));
+                        }
+                    }
+                    scene->window.draw_point(i, j, Color(color));
                 }
             }
         }
@@ -208,6 +249,7 @@ void Shading::render() {
 }
 
 void Shading::loop() {
+    scene->window.show();
     // static clock_t last_clock = clock();
     while (1) {
         render();

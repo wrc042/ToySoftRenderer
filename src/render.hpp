@@ -1,13 +1,13 @@
 #pragma once
 
 #include "scene.hpp"
+#include "shader.hpp"
 #include <ctime>
 #include <iostream>
 #include <set>
 
 class Renderer {
   public:
-    Scene *scene;
     virtual void render() = 0;
     virtual void loop() = 0;
 };

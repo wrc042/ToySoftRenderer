@@ -24,17 +24,21 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
     }
     if (!materials.empty()) {
         if (!materials[0].diffuse_texname.empty()) {
-            diffuse_map.set_path(mesh_root + "/" +
-                                 materials[0].diffuse_texname);
+            diffuse_map.preload_path(mesh_root + "/" +
+                                     materials[0].diffuse_texname);
         }
-        // std::cout << mesh_root + "/" + materials[0].diffuse_texname
-        //           << std::endl;
-        // std::cout << mesh_root + "/" + materials[0].ambient_texname
-        //           << std::endl;
-        // std::cout << mesh_root + "/" + materials[0].specular_texname
-        //           << std::endl;
-        // std::cout << mesh_root + "/" + materials[0].bump_texname <<
-        // std::endl;
+        if (!materials[0].ambient_texname.empty()) {
+            ambient_map.preload_path(mesh_root + "/" +
+                                     materials[0].ambient_texname);
+        }
+        if (!materials[0].specular_texname.empty()) {
+            specular_map.preload_path(mesh_root + "/" +
+                                      materials[0].specular_texname);
+        }
+        if (!materials[0].bump_texname.empty()) {
+            normal_map.preload_path(mesh_root + "/" +
+                                    materials[0].bump_texname);
+        }
     }
 
     int vertice_cnt = 0;
@@ -71,13 +75,15 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
             nidx[v] = ndict[idx[v].normal_index];
         }
         face_norms.push_back(FaceIndex(nidx[0], nidx[1], nidx[2]));
-        int uvidx[3];
-        for (int v = 0; v < 3; v++) {
-            if (uvdict.count(idx[v].texcoord_index) == 0)
-                uvdict[idx[v].texcoord_index] = uv_cnt++;
-            uvidx[v] = uvdict[idx[v].texcoord_index];
+        if (idx[0].texcoord_index >= 0) {
+            int uvidx[3];
+            for (int v = 0; v < 3; v++) {
+                if (uvdict.count(idx[v].texcoord_index) == 0)
+                    uvdict[idx[v].texcoord_index] = uv_cnt++;
+                uvidx[v] = uvdict[idx[v].texcoord_index];
+            }
+            face_uvs.push_back(FaceIndex(uvidx[0], uvidx[1], uvidx[2]));
         }
-        face_uvs.push_back(FaceIndex(uvidx[0], uvidx[1], uvidx[2]));
     }
     vertices.resize(3, vertice_cnt);
     normals.resize(3, normal_cnt);

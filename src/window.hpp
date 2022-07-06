@@ -22,7 +22,7 @@ class Window : public Fl_Window {
     Camera *camera;
     Window(int w, int h) : Fl_Window(w, h), width(w), height(h), camera(NULL) {
         framebuf = new uchar[width * height * 3];
-        show();
+        // show();
     }
     int handle(int event) {
         if (!camera || camera->fix) {

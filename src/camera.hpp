@@ -10,6 +10,7 @@ class Camera {
     float z_near, z_far;
     Eigen::Matrix4f extrinsic;
     Eigen::Matrix4f proj_mat;
+    Eigen::Vector3f pos;
 
     Camera(Eigen::Vector3f T = Eigen::Vector3f::Zero(),
            Eigen::Quaternionf R = Eigen::Quaternionf::Identity(),
@@ -43,7 +44,6 @@ class Camera {
     Eigen::Vector3f dir;
 
     Eigen::Vector3f target;
-    Eigen::Vector3f pos;
 
     float fovY, aspect;
     void update_proj_mat();
