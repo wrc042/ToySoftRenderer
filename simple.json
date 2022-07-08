@@ -1,0 +1,61 @@
+{
+   "render": {
+      "mode": "wireframe",
+      "axis": true
+   },
+   "camera": {
+      "fix": false,
+      "fovy": 0.7853981633974483,
+      "z_near": 0.1,
+      "z_far": 1000,
+      "rotation": {
+         "x": 0,
+         "y": 0,
+         "z": 0
+      },
+      "translation": {
+         "x": 0,
+         "y": 0,
+         "z": 6
+      }
+   },
+   "screen": {
+      "height": 600,
+      "width": 800
+   },
+   "objects": [
+      {
+         "path": "examples/suzanne.obj"
+      }
+   ],
+   "lights": [
+      {
+         "type": "point",
+         "fix": false,
+         "translation": {
+            "x": -6,
+            "y": 6,
+            "z": 6
+         },
+         "intensity": [
+            100,
+            100,
+            100
+         ]
+      },
+      {
+         "type": "point",
+         "fix": false,
+         "translation": {
+            "x": 6,
+            "y": -6,
+            "z": -9
+         },
+         "intensity": [
+            20,
+            20,
+            20
+         ]
+      }
+   ]
+}

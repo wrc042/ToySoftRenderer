@@ -129,6 +129,7 @@ Shading::Shading(Scene *scene_) : scene(scene_) {
         object.diffuse_map.load();
         object.ambient_map.load();
         object.specular_map.load();
+        object.shininess_map.load();
         object.normal_map.load();
     }
 }
@@ -264,9 +265,6 @@ void Shading::render() {
                             Eigen::Vector3f diffuse_map =
                                 object.diffuse_map.get_pixel_bilinear(
                                     uv_inter(0), 1 - uv_inter(1));
-                            Eigen::Vector3f specular_map =
-                                object.specular_map.get_pixel_bilinear(
-                                    uv_inter(0), 1 - uv_inter(1));
                             Eigen::Vector3f normal_map =
                                 object.normal_map.get_pixel_bilinear(
                                     uv_inter(0), 1 - uv_inter(1));
@@ -343,10 +341,9 @@ void Shading::render() {
                             Eigen::Vector3f mid =
                                 (dir_light + dir_view).normalized();
                             float angs = std::max(0.f, norm_inter.dot(mid));
-                            Eigen::Vector3f specular =
-                                specular_map.cwiseProduct(
-                                    ((light->intensity) / r2) *
-                                    std::powf(angs, object.shininess));
+                            Eigen::Vector3f specular = object.Ks.cwiseProduct(
+                                ((light->intensity) / r2) *
+                                std::powf(angs, object.shininess));
                             if (angd >= 0) {
                                 color += specular * angd;
                             }

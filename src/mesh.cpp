@@ -52,6 +52,10 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
             normal_map.preload_path(mesh_root + "/" +
                                     materials[0].bump_texname);
         }
+        if (!materials[0].specular_highlight_texname.empty()) {
+            shininess_map.preload_path(mesh_root + "/" +
+                                       materials[0].specular_highlight_texname);
+        }
     }
 
     int vertice_cnt = 0;
