@@ -22,9 +22,9 @@ struct Color {
     Color(uchar r_ = uchar(0), uchar g_ = uchar(0), uchar b_ = uchar(0))
         : r(r_), g(g_), b(b_) {}
     Color(const Eigen::Vector3f &c) {
-        r = uchar(floor(255 * c(0)));
-        g = uchar(floor(255 * c(1)));
-        b = uchar(floor(255 * c(2)));
+        r = uchar(std::min(255, int(floor(255 * c(0)))));
+        g = uchar(std::min(255, int(floor(255 * c(1)))));
+        b = uchar(std::min(255, int(floor(255 * c(2)))));
     }
     Color(const Colorf &c) {
         r = uchar(floor(255 * c(0)));

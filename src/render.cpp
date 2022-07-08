@@ -231,14 +231,23 @@ void Shading::render() {
                                 (scene->camera.pos - vert_inter).normalized();
                             float r2 = dlight.dot(dlight);
 
-                            float ang = dir_light.dot(norm_inter);
+                            float angd = dir_light.dot(norm_inter);
                             color += kd.cwiseProduct(((light->intensity) / r2) *
-                                                     std::max(ang, 0.f));
+                                                     std::max(angd, 0.f));
                             Eigen::Vector3f h =
-                                ((dir_light + dir_view) / 2).normalized();
-                            ang = std::pow(norm_inter.dot(h), 150);
-                            color += ks.cwiseProduct(((light->intensity) / r2) *
-                                                     std::max(ang, 0.f));
+                                (dir_light + dir_view).normalized();
+                            float angs = std::max(0.f, norm_inter.dot(h));
+                            Eigen::Vector3f specular =
+                                ks.cwiseProduct(((light->intensity) / r2) *
+                                                std::powf(angs, 1.f));
+                            if (angd >= 0) {
+                                color += specular * angd;
+                                // if (angd < 0.5) {
+                                //     color += specular * angd / 0.5;
+                                // } else {
+                                //     color += specular;
+                                // }
+                            }
                         }
                     }
                     scene->window.draw_point(i, j, Color(color));

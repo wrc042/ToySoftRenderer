@@ -7,7 +7,13 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
     std::string warn;
     std::string err;
 
-    std::string mesh_root = mesh_file.substr(0, mesh_file.find_last_of("/"));
+    int idx = mesh_file.find_last_of("/");
+    std::string mesh_root;
+    if (idx > 0) {
+        mesh_root = mesh_file.substr(0, idx);
+    } else {
+        mesh_root = "./";
+    }
 
     bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
                                 mesh_file.c_str(), mesh_root.c_str());
