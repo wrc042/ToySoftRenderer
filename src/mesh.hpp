@@ -41,6 +41,7 @@ class TriangleMesh {
     std::vector<FaceIndex> face_verts;
     std::vector<FaceIndex> face_norms;
     std::vector<FaceIndex> face_uvs;
+    bool has_uv = false;
     Image diffuse_map;
     Image ambient_map;
     Image specular_map;

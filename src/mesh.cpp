@@ -105,6 +105,9 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
     vertices.resize(3, vertice_cnt);
     normals.resize(3, normal_cnt);
     uvs.resize(2, uv_cnt);
+    if (uv_cnt > 0) {
+        has_uv = true;
+    }
     for (auto &p : vdict) {
         for (int v = 0; v < 3; v++)
             vertices.col(p.second)(v) = attrib.vertices[p.first * 3 + v];

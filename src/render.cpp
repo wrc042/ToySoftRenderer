@@ -149,8 +149,6 @@ void Shading::render() {
             Eigen::Vector4f verts_ca_[3];
             Eigen::Vector3f verts_ca[3];
             Eigen::Vector3f verts[3];
-            Eigen::Vector3f norms[3];
-            Eigen::Vector2f uvs[3];
             for (int v = 0; v < 3; v++) {
                 verts[v] = vertices_.col(object.face_verts[i][v]).topRows(3);
                 verts_ca_[v] = scene->camera.extrinsic *
@@ -159,9 +157,6 @@ void Shading::render() {
                 verts_proj[v] =
                     verts_proj_[v].topRows(3) / verts_proj_[v](3, 0);
                 verts_ca[v] = verts_ca_[v].topRows(3) / verts_ca_[v](3, 0);
-                norms[v] = object.normals.col(object.face_norms[i][v]);
-                uvs[v](0) = object.uvs.col(object.face_uvs[i][v])(0);
-                uvs[v](1) = object.uvs.col(object.face_uvs[i][v])(1);
             }
             float x0, y0, x1, y1, x2, y2;
             x0 = (0.5f + verts_proj[0](0)) * scene->width;
@@ -178,13 +173,13 @@ void Shading::render() {
                                  int(ceil(std::max(std::max(y0, y1), y2))));
             Eigen::Vector2f u(x0 - x2, y0 - y2);
             Eigen::Vector2f v(x1 - x2, y1 - y2);
-            for (int i = x_min; i < x_max; i++) {
-                for (int j = y_min; j < y_max; j++) {
+            for (int pi = x_min; pi < x_max; pi++) {
+                for (int pj = y_min; pj < y_max; pj++) {
                     float tmp = u(0) * v(1) - u(1) * v(0);
                     // Eigen::Vector2f p(i + 0.5f - x2, j + 0.5f - y2);
                     // float t0 = (p(0) * v(1) - p(1) * v(0)) / tmp;
                     // float t1 = (p(0) * u(1) - p(1) * u(0)) / -tmp;
-                    Eigen::Vector2f p(-(j + 0.5f - y2), i + 0.5f - x2);
+                    Eigen::Vector2f p(-(pj + 0.5f - y2), pi + 0.5f - x2);
                     float t0 = (p.dot(v)) / tmp;
                     float t1 = (p.dot(u)) / -tmp;
                     if ((t0 < 0.0f) || (t1 < 0.0f) || ((1 - t1 - t0) < 0.0f))
@@ -199,20 +194,16 @@ void Shading::render() {
                     float z_inter = t0_ * verts_ca[0][2] +
                                     t1_ * verts_ca[1][2] +
                                     (1 - t0_ - t1_) * verts_ca[2][2];
-                    if (z_inter < z_buffer[i + j * scene->width] ||
+                    if (z_inter < z_buffer[pi + pj * scene->width] ||
                         z_inter > scene->camera.z_near)
                         continue;
-                    z_buffer[i + j * scene->width] = z_inter;
+                    z_buffer[pi + pj * scene->width] = z_inter;
                     // Eigen::Vector2f uv_inter =
                     //     t0 * uvs[0] + t1 * uvs[1] + (1 - t0 - t1) * uvs[2];
                     // scene->window.draw_point(
                     //     i, j,
                     //     Color(object.diffuse_map.get_pixel_bilinear(
                     //         uv_inter(0), 1 - uv_inter(1))));
-                    // Eigen::Vector3f norm_inter = t0_ * norms[0] +
-                    //                              t1_ * norms[1] +
-                    //                              (1 - t0_ - t1_) * norms[2];
-                    // norm_inter = norm_inter.normalized().cwiseAbs();
                     // scene->window.draw_point(i, j, Color(norm_inter));
                     // Eigen::Vector3f color(0, 0, 0);
                     // for (auto &light : scene->lights) {
@@ -256,100 +247,10 @@ void Shading::render() {
                     // }
                     // scene->window.draw_point(i, j, Color(color));
 
-                    Eigen::Vector3f color(0, 0, 0);
-                    for (auto &light : scene->lights) {
-                        if (light->type == POINT) {
-                            Eigen::Vector2f uv_inter = t0 * uvs[0] +
-                                                       t1 * uvs[1] +
-                                                       (1 - t0 - t1) * uvs[2];
-                            Eigen::Vector3f diffuse_map =
-                                object.diffuse_map.get_pixel_bilinear(
-                                    uv_inter(0), 1 - uv_inter(1));
-                            Eigen::Vector3f normal_map =
-                                object.normal_map.get_pixel_bilinear(
-                                    uv_inter(0), 1 - uv_inter(1));
-                            Eigen::Vector3f norm_inter =
-                                (t0_ * norms[0] + t1_ * norms[1] +
-                                 (1 - t0_ - t1_) * norms[2])
-                                    .normalized();
-                            Eigen::Vector3f vert_inter =
-                                t0_ * verts[0] + t1_ * verts[1] +
-                                (1 - t0_ - t1_) * verts[2];
-
-                            auto decode_norm = [](Eigen::Vector3f &a) {
-                                return a * 2 - Eigen::Vector3f::Ones();
-                            };
-                            float k_norm_map = 15;
-                            Eigen::Vector3f t, b, ln;
-                            Eigen::Matrix3f TBN;
-                            t[1] = std::sqrt(norm_inter[0] * norm_inter[0] +
-                                             norm_inter[2] * norm_inter[2]);
-                            t[0] = norm_inter[0] * norm_inter[1] / t[1];
-                            t[2] = norm_inter[2] * norm_inter[1] / t[1];
-                            b = norm_inter.cross(t);
-                            TBN << t[0], b[0], norm_inter[0], t[1], b[1],
-                                norm_inter[1], t[2], b[2], norm_inter[2];
-                            float w = object.normal_map.width;
-                            float h = object.normal_map.height;
-                            float u = uv_inter(0);
-                            float v = 1 - uv_inter(1);
-
-                            float dU =
-                                k_norm_map *
-                                (decode_norm(
-                                     object.normal_map.get_pixel_bilinear(
-                                         u + 1.0f / w, v))
-                                     .norm() -
-                                 decode_norm(
-                                     object.normal_map.get_pixel_bilinear(u, v))
-                                     .norm());
-                            float dV =
-                                k_norm_map *
-                                (decode_norm(
-                                     object.normal_map.get_pixel_bilinear(
-                                         u, v + 1.0f / h))
-                                     .norm() -
-                                 decode_norm(
-                                     object.normal_map.get_pixel_bilinear(u, v))
-                                     .norm());
-                            ln << -dU, -dV, 1.0f;
-                            // std::cout << norm_inter.transpose() << std::endl;
-                            norm_inter = (TBN * ln).normalized();
-                            // std::cout << norm_inter.transpose() << std::endl;
-                            // std::cout << std::endl;
-                            // norm_inter =
-                            //     2 * object.normal_map.get_pixel_bilinear(u,
-                            //     v) - Eigen::Vector3f::Ones();
-                            // norm_inter.normalize();
-
-                            Eigen::Vector3f light_pos_ = light->pos;
-                            if (!(light->fix)) {
-                                light_pos_ = scene->camera.rotation.matrix() *
-                                                 light->pos +
-                                             scene->camera.translation;
-                            }
-                            Eigen::Vector3f dlight = light_pos_ - vert_inter;
-                            Eigen::Vector3f dir_light = dlight.normalized();
-                            Eigen::Vector3f dir_view =
-                                (scene->camera.pos - vert_inter).normalized();
-                            float r2 = dlight.dot(dlight);
-
-                            float angd = dir_light.dot(norm_inter);
-                            color += diffuse_map.cwiseProduct(
-                                ((light->intensity) / r2) *
-                                std::max(angd, 0.f));
-                            Eigen::Vector3f mid =
-                                (dir_light + dir_view).normalized();
-                            float angs = std::max(0.f, norm_inter.dot(mid));
-                            Eigen::Vector3f specular = object.Ks.cwiseProduct(
-                                ((light->intensity) / r2) *
-                                std::powf(angs, object.shininess));
-                            if (angd >= 0) {
-                                color += specular * angd;
-                            }
-                        }
-                    }
-                    scene->window.draw_point(i, j, Color(color));
+                    Payload payload(scene, &object, verts, verts_ca, t0_, t1_,
+                                    i);
+                    Eigen::Vector3f color = general_phong_shader(payload);
+                    scene->window.draw_point(pi, pj, Color(color));
                 }
             }
         }

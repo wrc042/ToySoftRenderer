@@ -14,9 +14,6 @@ bin
 # compile_commands
 compile_commands.json
 
-# mesh models
-*.obj
-
 # output
 out.txt
 
