@@ -214,8 +214,6 @@ void Shading::render() {
                     // norm_inter = norm_inter.normalized().cwiseAbs();
                     // scene->window.draw_point(i, j, Color(norm_inter));
                     Eigen::Vector3f color(0, 0, 0);
-                    Eigen::Vector3f kd(0.8, 0.8, 0.8);
-                    Eigen::Vector3f ks(0.8, 0.8, 0.8);
                     for (auto &light : scene->lights) {
                         if (light->type == POINT) {
                             Eigen::Vector3f norm_inter =
@@ -225,28 +223,31 @@ void Shading::render() {
                             Eigen::Vector3f vert_inter =
                                 t0_ * verts[0] + t1_ * verts[1] +
                                 (1 - t0_ - t1_) * verts[2];
-                            Eigen::Vector3f dlight = light->pos - vert_inter;
+                            Eigen::Vector3f light_pos_ = light->pos;
+                            if (!(light->fix)) {
+                                light_pos_ =
+                                    scene->camera.rotation.matrix() *
+                                        light->pos +
+                                    scene->camera.translation;
+                            }
+                            Eigen::Vector3f dlight = light_pos_ - vert_inter;
                             Eigen::Vector3f dir_light = dlight.normalized();
                             Eigen::Vector3f dir_view =
                                 (scene->camera.pos - vert_inter).normalized();
                             float r2 = dlight.dot(dlight);
 
                             float angd = dir_light.dot(norm_inter);
-                            color += kd.cwiseProduct(((light->intensity) / r2) *
-                                                     std::max(angd, 0.f));
+                            color += object.Kd.cwiseProduct(
+                                ((light->intensity) / r2) *
+                                std::max(angd, 0.f));
                             Eigen::Vector3f h =
                                 (dir_light + dir_view).normalized();
                             float angs = std::max(0.f, norm_inter.dot(h));
-                            Eigen::Vector3f specular =
-                                ks.cwiseProduct(((light->intensity) / r2) *
-                                                std::powf(angs, 1.f));
+                            Eigen::Vector3f specular = object.Ks.cwiseProduct(
+                                ((light->intensity) / r2) *
+                                std::powf(angs, object.shininess));
                             if (angd >= 0) {
                                 color += specular * angd;
-                                // if (angd < 0.5) {
-                                //     color += specular * angd / 0.5;
-                                // } else {
-                                //     color += specular;
-                                // }
                             }
                         }
                     }

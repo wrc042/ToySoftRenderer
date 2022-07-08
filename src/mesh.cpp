@@ -29,6 +29,13 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
         exit(0);
     }
     if (!materials.empty()) {
+        Kd << materials[0].diffuse[0], materials[0].diffuse[1],
+            materials[0].diffuse[2];
+        Ks << materials[0].specular[0], materials[0].specular[1],
+            materials[0].specular[2];
+        Ka << materials[0].ambient[0], materials[0].ambient[1],
+            materials[0].ambient[2];
+        shininess = materials[0].shininess;
         if (!materials[0].diffuse_texname.empty()) {
             diffuse_map.preload_path(mesh_root + "/" +
                                      materials[0].diffuse_texname);

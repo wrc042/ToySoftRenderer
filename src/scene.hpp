@@ -57,7 +57,8 @@ class Scene {
                 Eigen::Vector3f intensity(light["intensity"][0].asFloat(),
                                           light["intensity"][1].asFloat(),
                                           light["intensity"][2].asFloat());
-                Light *tmp = new PointLight(pos, intensity, POINT);
+                Light *tmp = new PointLight(pos, intensity, POINT,
+                                            light["fix"].asBool());
                 lights.push_back(tmp);
             }
         }

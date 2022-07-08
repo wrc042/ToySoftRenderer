@@ -45,6 +45,10 @@ class TriangleMesh {
     Image ambient_map;
     Image specular_map;
     Image normal_map;
+    Eigen::Vector3f Kd;
+    Eigen::Vector3f Ks;
+    Eigen::Vector3f Ka;
+    float shininess;
     TriangleMesh(){};
     TriangleMesh(std::string mesh_file);
 };

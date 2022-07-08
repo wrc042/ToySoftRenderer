@@ -25,21 +25,36 @@
    },
    "objects": [
       {
-         "path": "sphere.obj"
+         "path": "examples/suzanne.obj"
       }
    ],
    "lights": [
       {
          "type": "point",
+         "fix": false,
          "translation": {
-            "x": 6,
+            "x": -6,
             "y": 6,
             "z": 6
          },
          "intensity": [
-            50,
-            50,
-            50
+            100,
+            100,
+            100
+         ]
+      },
+      {
+         "type": "point",
+         "fix": false,
+         "translation": {
+            "x": 6,
+            "y": -6,
+            "z": -9
+         },
+         "intensity": [
+            20,
+            20,
+            20
          ]
       }
    ]
