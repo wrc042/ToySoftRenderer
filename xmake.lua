@@ -1,13 +1,13 @@
 add_rules("mode.debug", "mode.release")
 
-add_requires("eigen", "fltk", "tinyobjloader", "jsoncpp", "cxxopts", "lodepng")
+add_requires("eigen", "fltk", "tinyobjloader", "jsoncpp", "cxxopts", "stb")
 set_languages("cxx17")
 
 target("ToySoftRenderer")
     set_kind("binary")
     add_includedirs("src")
     add_files("src/*.cpp")
-    add_packages("eigen", "fltk", "tinyobjloader", "jsoncpp", "cxxopts", "lodepng", {public=true})
+    add_packages("eigen", "fltk", "tinyobjloader", "jsoncpp", "cxxopts", "stb", {public=true})
     set_targetdir("bin")
     set_rundir("$(projectdir)")
 

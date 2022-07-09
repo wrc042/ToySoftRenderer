@@ -1,30 +1,5 @@
 #include "render.hpp"
 
-void save_png(const char *filename, uchar *framebuffer, unsigned width,
-              unsigned height) {
-    std::vector<unsigned char> image;
-    std::vector<unsigned char> png;
-    image.resize(width * height * 4);
-    for (unsigned y = 0; y < height; y++)
-        for (unsigned x = 0; x < width; x++) {
-            image[4 * width * y + 4 * x + 0] =
-                framebuffer[3 * width * (y) + 3 * (x) + 0];
-            image[4 * width * y + 4 * x + 1] =
-                framebuffer[3 * width * (y) + 3 * (x) + 1];
-            image[4 * width * y + 4 * x + 2] =
-                framebuffer[3 * width * (y) + 3 * (x) + 2];
-            image[4 * width * y + 4 * x + 3] = 255;
-        }
-
-    // Encode the image
-    unsigned error = lodepng::encode(filename, image, width, height);
-
-    // if there's an error, display it
-    if (error)
-        std::cout << "encoder error " << error << ": "
-                  << lodepng_error_text(error) << std::endl;
-}
-
 Wireframe::Wireframe(Scene *scene_)
     : scene(scene_), with_axis(scene->config["render"]["axis"].asBool()) {
     vertices.resize(4, 0);
@@ -41,9 +16,8 @@ Wireframe::Wireframe(Scene *scene_)
         vertices_.rightCols(object.vertices.cols()).bottomRows(1) =
             tmpv.transpose();
         vertices = vertices_;
-        for (auto face : object.faces) {
+        for (auto face : object.face_verts) {
             face = face + offset;
-            faces.push_back(face + offset);
             int v0, v1;
             std::pair<int, int> tmp_pair;
             v0 = face.verts[0] < face.verts[1] ? face.verts[0] : face.verts[1];
@@ -109,12 +83,15 @@ void Wireframe::draw_axis() {
 }
 
 void Wireframe::render() {
+    Eigen::Matrix<float, 4, Eigen::Dynamic> verts_proj;
     scene->window.fill_background(Color(120, 120, 120));
     for (auto &edge : edges) {
-        Eigen::Vector3f v0 = vertices_proj.block(0, edge.first, 3, 1) /
-                             vertices_proj(3, edge.first);
-        Eigen::Vector3f v1 = vertices_proj.block(0, edge.second, 3, 1) /
-                             vertices_proj(3, edge.second);
+        verts_proj = scene->camera.proj_mat * scene->camera.extrinsic *
+                     vertices.col(edge.first);
+        Eigen::Vector3f v0 = verts_proj.topRows(3) / verts_proj(3, 0);
+        verts_proj = scene->camera.proj_mat * scene->camera.extrinsic *
+                     vertices.col(edge.second);
+        Eigen::Vector3f v1 = verts_proj.topRows(3) / verts_proj(3, 0);
         int x0, y0, x1, y1;
         x0 = floor((0.5f + v0(0)) * scene->width);
         y0 = floor((0.5f - v0(1)) * scene->height);
@@ -130,10 +107,112 @@ void Wireframe::render() {
 }
 
 void Wireframe::loop() {
+    scene->window.show();
     // static clock_t last_clock = clock();
     while (1) {
-        vertices_proj =
-            scene->camera.proj_mat * scene->camera.extrinsic * vertices;
+        render();
+        // clock_t now_clock = clock();
+        // std::cout << "FPS: " << 1.0f * CLOCKS_PER_SEC / (now_clock -
+        // last_clock)
+        //   << std::endl;
+        // last_clock = now_clock;
+        scene->window.flush_screen_wait();
+        if (!scene->window.shown()) {
+            break;
+        }
+    }
+}
+
+Shading::Shading(Scene *scene_) : scene(scene_) {
+    z_buffer = new float[scene->width * scene->height];
+    for (auto &object : scene->objects) {
+        object.diffuse_map.load();
+        object.ambient_map.load();
+        object.specular_map.load();
+        object.shininess_map.load();
+        object.normal_map.load();
+    }
+}
+
+void Shading::render() {
+    for (int i = 0; i < scene->width * scene->height; i++)
+        z_buffer[i] = -scene->camera.z_far;
+    scene->window.fill_background(Color(0, 0, 0));
+    for (auto &object : scene->objects) {
+        Eigen::Matrix<float, 4, Eigen::Dynamic> vertices_;
+        vertices_.resize(4, object.vertices.cols());
+        vertices_.topRows(3) = object.vertices;
+        vertices_.bottomRows(1) = Eigen::RowVectorXf::Ones(vertices_.cols());
+        for (int i = 0; i < object.face_verts.size(); i++) {
+            Eigen::Vector4f verts_proj_[3];
+            Eigen::Vector3f verts_proj[3];
+            Eigen::Vector4f verts_ca_[3];
+            Eigen::Vector3f verts_ca[3];
+            Eigen::Vector3f verts[3];
+            for (int v = 0; v < 3; v++) {
+                verts[v] = vertices_.col(object.face_verts[i][v]).topRows(3);
+                verts_ca_[v] = scene->camera.extrinsic *
+                               vertices_.col(object.face_verts[i][v]);
+                verts_proj_[v] = scene->camera.proj_mat * verts_ca_[v];
+                verts_proj[v] =
+                    verts_proj_[v].topRows(3) / verts_proj_[v](3, 0);
+                verts_ca[v] = verts_ca_[v].topRows(3) / verts_ca_[v](3, 0);
+            }
+            float x0, y0, x1, y1, x2, y2;
+            x0 = (0.5f + verts_proj[0](0)) * scene->width;
+            y0 = (0.5f - verts_proj[0](1)) * scene->height;
+            x1 = (0.5f + verts_proj[1](0)) * scene->width;
+            y1 = (0.5f - verts_proj[1](1)) * scene->height;
+            x2 = (0.5f + verts_proj[2](0)) * scene->width;
+            y2 = (0.5f - verts_proj[2](1)) * scene->height;
+            int x_min = std::max(0, int(floor(std::min(std::min(x0, x1), x2))));
+            int x_max = std::min(scene->width - 1,
+                                 int(ceil(std::max(std::max(x0, x1), x2))));
+            int y_min = std::max(0, int(floor(std::min(std::min(y0, y1), y2))));
+            int y_max = std::min(scene->height - 1,
+                                 int(ceil(std::max(std::max(y0, y1), y2))));
+            Eigen::Vector2f u(x0 - x2, y0 - y2);
+            Eigen::Vector2f v(x1 - x2, y1 - y2);
+            for (int pi = x_min; pi < x_max; pi++) {
+                for (int pj = y_min; pj < y_max; pj++) {
+                    float tmp = u(0) * v(1) - u(1) * v(0);
+                    // Eigen::Vector2f p(i + 0.5f - x2, j + 0.5f - y2);
+                    // float t0 = (p(0) * v(1) - p(1) * v(0)) / tmp;
+                    // float t1 = (p(0) * u(1) - p(1) * u(0)) / -tmp;
+                    Eigen::Vector2f p(-(pj + 0.5f - y2), pi + 0.5f - x2);
+                    float t0 = (p.dot(v)) / tmp;
+                    float t1 = (p.dot(u)) / -tmp;
+                    if ((t0 < 0.0f) || (t1 < 0.0f) || ((1 - t1 - t0) < 0.0f))
+                        continue;
+                    tmp = (verts_ca[0][2] * verts_ca[1][2] +
+                           verts_ca[1][2] * (verts_ca[2][2] - verts_ca[0][2]) *
+                               t0 +
+                           verts_ca[0][2] * (verts_ca[2][2] - verts_ca[1][2]) *
+                               t1);
+                    float t0_ = verts_ca[1][2] * verts_ca[2][2] * t0 / tmp;
+                    float t1_ = verts_ca[0][2] * verts_ca[2][2] * t1 / tmp;
+                    float z_inter = t0_ * verts_ca[0][2] +
+                                    t1_ * verts_ca[1][2] +
+                                    (1 - t0_ - t1_) * verts_ca[2][2];
+                    if (z_inter < z_buffer[pi + pj * scene->width] ||
+                        z_inter > scene->camera.z_near)
+                        continue;
+                    z_buffer[pi + pj * scene->width] = z_inter;
+
+                    Payload payload(scene, &object, verts, verts_ca, t0_, t1_,
+                                    i);
+                    Eigen::Vector3f color = general_phong_shader(payload);
+                    scene->window.draw_point(pi, pj, Color(color));
+                }
+            }
+        }
+    }
+}
+
+void Shading::loop() {
+    scene->window.show();
+    // static clock_t last_clock = clock();
+    while (1) {
         render();
         // clock_t now_clock = clock();
         // std::cout << "FPS: " << 1.0f * CLOCKS_PER_SEC / (now_clock -

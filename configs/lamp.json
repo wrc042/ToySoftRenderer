@@ -1,0 +1,60 @@
+{
+   "render": {
+      "mode": "shading"
+   },
+   "camera": {
+      "fix": false,
+      "fovy": 0.7853981633974483,
+      "z_near": 0.1,
+      "z_far": 1000,
+      "rotation": {
+         "x": 0,
+         "y": 90,
+         "z": 0
+      },
+      "translation": {
+         "x": 1,
+         "y": 0.1,
+         "z": 0
+      }
+   },
+   "screen": {
+      "height": 600,
+      "width": 800
+   },
+   "objects": [
+      {
+         "path": "examples/lamp/desk_lamp.obj"
+      }
+   ],
+   "lights": [
+      {
+         "type": "point",
+         "fix": false,
+         "translation": {
+            "x": -1,
+            "y": 1,
+            "z": 1
+         },
+         "intensity": [
+            5,
+            5,
+            5
+         ]
+      },
+      {
+         "type": "point",
+         "fix": false,
+         "translation": {
+            "x": 1,
+            "y": -1,
+            "z": -1.5
+         },
+         "intensity": [
+            1,
+            1,
+            1
+         ]
+      }
+   ]
+}

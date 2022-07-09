@@ -2,6 +2,7 @@
 
 #include "camera.hpp"
 #include "config.hpp"
+#include "light.hpp"
 #include "mesh.hpp"
 #include "render.hpp"
 #include "window.hpp"
@@ -16,6 +17,7 @@ class Scene {
     int height;
     uchar *framebuf;
     std::vector<TriangleMesh> objects;
+    std::vector<Light *> lights;
     Scene(Json::Value config_)
         : config(config_), window(config["screen"]["width"].asInt(),
                                   config["screen"]["height"].asInt()),
@@ -47,8 +49,26 @@ class Scene {
         for (auto object : config["objects"]) {
             objects.push_back(TriangleMesh(object["path"].asString()));
         }
+        for (auto light : config["lights"]) {
+            if (light["type"].asString() == "point") {
+                Eigen::Vector3f pos(light["translation"]["x"].asFloat(),
+                                    light["translation"]["y"].asFloat(),
+                                    light["translation"]["z"].asFloat());
+                Eigen::Vector3f intensity(light["intensity"][0].asFloat(),
+                                          light["intensity"][1].asFloat(),
+                                          light["intensity"][2].asFloat());
+                Light *tmp = new PointLight(pos, intensity, POINT,
+                                            light["fix"].asBool());
+                lights.push_back(tmp);
+            }
+        }
     }
     void add_object(std::string mesh_file) {
         objects.push_back(TriangleMesh(mesh_file));
+    }
+    ~Scene() {
+        for (auto &light : lights) {
+            delete light;
+        }
     }
 };
