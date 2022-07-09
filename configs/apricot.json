@@ -1,7 +1,6 @@
 {
    "render": {
-      "mode": "wireframe",
-      "axis": false
+      "mode": "shading"
    },
    "camera": {
       "fix": false,
@@ -38,9 +37,9 @@
             "z": 6
          },
          "intensity": [
-            300,
-            300,
-            300
+            200,
+            200,
+            200
          ]
       },
       {

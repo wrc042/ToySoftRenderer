@@ -1,7 +1,6 @@
 {
    "render": {
-      "mode": "wireframe",
-      "axis": false
+      "mode": "shading"
    },
    "camera": {
       "fix": false,

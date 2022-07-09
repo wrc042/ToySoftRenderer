@@ -22,28 +22,28 @@ Eigen::Vector3f general_phong_shader(const Payload &payload) {
     if (payload.object->has_uv) {
         uv_inter = payload.t0 * uvs[0] + payload.t1 * uvs[1] +
                    (1 - payload.t0 - payload.t1) * uvs[2];
-        if (!payload.object->diffuse_map.empty()) {
-            k_diffuse = payload.object->diffuse_map.get_pixel_bilinear(
-                uv_inter(0), 1 - uv_inter(1));
-        } else {
-            k_diffuse = payload.object->Kd;
-        }
-        if (!payload.object->normal_map.empty()) {
-            normal_map = payload.object->normal_map.get_pixel_bilinear(
-                uv_inter(0), 1 - uv_inter(1));
-        }
-        if (!payload.object->specular_map.empty()) {
-            k_specular = payload.object->specular_map.get_pixel_bilinear(
-                uv_inter(0), 1 - uv_inter(1));
-        } else {
-            k_specular = payload.object->Ks;
-        }
-        if (!payload.object->shininess_map.empty()) {
-            k_shininess = payload.object->shininess_map.get_pixel_bilinear(
-                uv_inter(0), 1 - uv_inter(1))(0);
-        } else {
-            k_shininess = payload.object->shininess;
-        }
+    }
+    if (payload.object->has_uv && !payload.object->diffuse_map.empty()) {
+        k_diffuse = payload.object->diffuse_map.get_pixel_bilinear(
+            uv_inter(0), 1 - uv_inter(1));
+    } else {
+        k_diffuse = payload.object->Kd;
+    }
+    if (payload.object->has_uv && !payload.object->normal_map.empty()) {
+        normal_map = payload.object->normal_map.get_pixel_bilinear(
+            uv_inter(0), 1 - uv_inter(1));
+    }
+    if (payload.object->has_uv && !payload.object->specular_map.empty()) {
+        k_specular = payload.object->specular_map.get_pixel_bilinear(
+            uv_inter(0), 1 - uv_inter(1));
+    } else {
+        k_specular = payload.object->Ks;
+    }
+    if (payload.object->has_uv && !payload.object->shininess_map.empty()) {
+        k_shininess = payload.object->shininess_map.get_pixel_bilinear(
+            uv_inter(0), 1 - uv_inter(1))(0);
+    } else {
+        k_shininess = payload.object->shininess;
     }
     Eigen::Vector3f norm_inter =
         (payload.t0 * norms[0] + payload.t1 * norms[1] +

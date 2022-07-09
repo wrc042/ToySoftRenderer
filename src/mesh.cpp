@@ -28,6 +28,12 @@ TriangleMesh::TriangleMesh(std::string mesh_file) {
         std::cout << "ERROR WHEN LOADING " << mesh_file << std::endl;
         exit(0);
     }
+
+    Kd = Eigen::Vector3f::Ones() * 0.8;
+    Ks = Eigen::Vector3f::Ones() * 0.8;
+    Ka = Eigen::Vector3f::Ones() * 0.8;
+    shininess = 500;
+
     if (!materials.empty()) {
         Kd << materials[0].diffuse[0], materials[0].diffuse[1],
             materials[0].diffuse[2];

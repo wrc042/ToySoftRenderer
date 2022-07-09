@@ -198,54 +198,6 @@ void Shading::render() {
                         z_inter > scene->camera.z_near)
                         continue;
                     z_buffer[pi + pj * scene->width] = z_inter;
-                    // Eigen::Vector2f uv_inter =
-                    //     t0 * uvs[0] + t1 * uvs[1] + (1 - t0 - t1) * uvs[2];
-                    // scene->window.draw_point(
-                    //     i, j,
-                    //     Color(object.diffuse_map.get_pixel_bilinear(
-                    //         uv_inter(0), 1 - uv_inter(1))));
-                    // scene->window.draw_point(i, j, Color(norm_inter));
-                    // Eigen::Vector3f color(0, 0, 0);
-                    // for (auto &light : scene->lights) {
-                    //     if (light->type == POINT) {
-                    //         Eigen::Vector3f norm_inter =
-                    //             (t0_ * norms[0] + t1_ * norms[1] +
-                    //              (1 - t0_ - t1_) * norms[2])
-                    //                 .normalized();
-                    //         Eigen::Vector3f vert_inter =
-                    //             t0_ * verts[0] + t1_ * verts[1] +
-                    //             (1 - t0_ - t1_) * verts[2];
-                    //         Eigen::Vector3f light_pos_ = light->pos;
-                    //         if (!(light->fix)) {
-                    //             light_pos_ =
-                    //                 scene->camera.rotation.matrix() *
-                    //                     light->pos +
-                    //                 scene->camera.translation;
-                    //         }
-                    //         Eigen::Vector3f dlight = light_pos_ - vert_inter;
-                    //         Eigen::Vector3f dir_light = dlight.normalized();
-                    //         Eigen::Vector3f dir_view =
-                    //             (scene->camera.pos -
-                    //             vert_inter).normalized();
-                    //         float r2 = dlight.dot(dlight);
-
-                    //         float angd = dir_light.dot(norm_inter);
-                    //         color += object.Kd.cwiseProduct(
-                    //             ((light->intensity) / r2) *
-                    //             std::max(angd, 0.f));
-                    //         Eigen::Vector3f h =
-                    //             (dir_light + dir_view).normalized();
-                    //         float angs = std::max(0.f, norm_inter.dot(h));
-                    //         Eigen::Vector3f specular =
-                    //         object.Ks.cwiseProduct(
-                    //             ((light->intensity) / r2) *
-                    //             std::powf(angs, object.shininess));
-                    //         if (angd >= 0) {
-                    //             color += specular * angd;
-                    //         }
-                    //     }
-                    // }
-                    // scene->window.draw_point(i, j, Color(color));
 
                     Payload payload(scene, &object, verts, verts_ca, t0_, t1_,
                                     i);
